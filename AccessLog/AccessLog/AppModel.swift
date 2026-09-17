@@ -34,10 +34,26 @@ final class AppModel: ObservableObject {
 
         NSApp.activate(ignoringOtherApps: true)
         for window in NSApp.windows {
-            window.level = .floating
-            window.collectionBehavior.insert(.moveToActiveSpace)
+            // Sit above normal apps so the form feels mandatory.
+            window.level = .modalPanel
+            window.collectionBehavior.insert([.moveToActiveSpace, .fullScreenAuxiliary])
+            window.isMovable = false
+
+            // Hide traffic-light close so users submit instead of dismissing.
+            window.standardWindowButton(.closeButton)?.isHidden = true
+            window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+            window.standardWindowButton(.zoomButton)?.isHidden = true
+
+            if let screen = NSScreen.main {
+                let visible = screen.visibleFrame
+                let width = min(640, max(560, visible.width * 0.42))
+                let height = min(680, max(580, visible.height * 0.62))
+                window.setContentSize(NSSize(width: width, height: height))
+            }
+
             window.makeKeyAndOrderFront(nil)
             window.center()
+            window.orderFrontRegardless()
         }
     }
 
@@ -85,9 +101,12 @@ final class AppModel: ObservableObject {
                         statusMessage = "✓ Access recorded (device clock — Wi‑Fi time unavailable)"
                     }
                     isSuccess = true
+                    dismissFormSoon()
                 case .failed(let message):
                     statusMessage = "✓ Saved locally. Sync failed: \(message)"
                     isSuccess = false
+                    // Still saved locally — close so unlock flow isn't blocked.
+                    dismissFormSoon()
                 }
             } catch {
                 statusMessage = "Could not save locally: \(error.localizedDescription)"
@@ -95,6 +114,20 @@ final class AppModel: ObservableObject {
             }
 
             isSubmitting = false
+        }
+    }
+
+    /// Hides the form after a short success flash; app stays running for the next unlock.
+    private func dismissFormSoon(after delay: TimeInterval = 0.9) {
+        Task {
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            dismissForm()
+        }
+    }
+
+    func dismissForm() {
+        for window in NSApp.windows where window.isVisible {
+            window.orderOut(nil)
         }
     }
 
