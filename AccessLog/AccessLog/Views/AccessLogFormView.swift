@@ -11,63 +11,92 @@ struct AccessLogFormView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("Access Log")
-                .font(.system(size: 22, weight: .semibold))
-                .frame(maxWidth: .infinity)
+        VStack(spacing: 0) {
+            // Gate header
+            VStack(spacing: 10) {
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(Color(red: 0.06, green: 0.46, blue: 0.43))
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Name")
-                    .font(.headline)
-                TextField("", text: $model.name)
-                    .textFieldStyle(.roundedBorder)
-                    .focused($focusedField, equals: .name)
-                    .onSubmit { focusedField = .purpose }
+                Text("Access Log Required")
+                    .font(.system(size: 28, weight: .bold))
 
-                if let nameError = model.nameError {
-                    Text(nameError)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                }
+                Text("Please record who you are and why you are using this Mac before continuing.")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 480)
             }
+            .padding(.top, 36)
+            .padding(.horizontal, 40)
+            .padding(.bottom, 28)
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Purpose")
-                    .font(.headline)
-                TextEditor(text: $model.purpose)
-                    .font(.body)
-                    .frame(minHeight: 80, maxHeight: 120)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
-                    )
-                    .focused($focusedField, equals: .purpose)
+            Divider()
 
-                if let purposeError = model.purposeError {
-                    Text(purposeError)
-                        .font(.caption)
-                        .foregroundStyle(.red)
+            VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Name")
+                        .font(.system(size: 15, weight: .semibold))
+                    TextField("Your full name", text: $model.name)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 16))
+                        .focused($focusedField, equals: .name)
+                        .onSubmit { focusedField = .purpose }
+
+                    if let nameError = model.nameError {
+                        Text(nameError)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
                 }
-            }
 
-            HStack {
-                Spacer()
-                Button("Submit") {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Purpose of access")
+                        .font(.system(size: 15, weight: .semibold))
+                    TextEditor(text: $model.purpose)
+                        .font(.system(size: 16))
+                        .frame(minHeight: 140)
+                        .padding(6)
+                        .background(Color(nsColor: .textBackgroundColor))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                        )
+                        .focused($focusedField, equals: .purpose)
+
+                    if let purposeError = model.purposeError {
+                        Text(purposeError)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
+
+                Button {
                     model.submit()
+                } label: {
+                    Text(model.isSubmitting ? "Submitting…" : "Submit & Continue")
+                        .font(.system(size: 16, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(Color(red: 0.06, green: 0.46, blue: 0.43))
                 .keyboardShortcut(.defaultAction)
                 .disabled(model.isSubmitting)
-                Spacer()
-            }
+                .padding(.top, 4)
 
-            if let status = model.statusMessage {
-                Text(status)
-                    .font(.callout)
-                    .foregroundStyle(model.isSuccess ? Color.green : Color.red)
-                    .frame(maxWidth: .infinity)
+                if let status = model.statusMessage {
+                    Text(status)
+                        .font(.callout)
+                        .foregroundStyle(model.isSuccess ? Color.green : Color.secondary)
+                        .frame(maxWidth: .infinity)
+                }
             }
+            .padding(40)
 
-            HStack(spacing: 16) {
+            Spacer(minLength: 0)
+
+            HStack(spacing: 20) {
                 Button("Open config folder") {
                     NSWorkspace.shared.open(AppPaths.supportDirectory)
                 }
@@ -80,11 +109,10 @@ struct AccessLogFormView: View {
                 .buttonStyle(.plain)
             }
             .font(.caption)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity)
+            .foregroundStyle(.tertiary)
+            .padding(.bottom, 20)
         }
-        .padding(28)
-        .frame(width: 380)
+        .frame(minWidth: 560, idealWidth: 620, minHeight: 560, idealHeight: 620)
         .onAppear {
             focusedField = .name
         }
