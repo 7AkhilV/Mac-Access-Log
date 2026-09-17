@@ -1,0 +1,349 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* AccessLogApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* AccessLogApp.swift */; };
+		A10000000000000000000002 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* AppModel.swift */; };
+		A10000000000000000000003 /* AccessRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* AccessRecord.swift */; };
+		A10000000000000000000004 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* AppConfig.swift */; };
+		A10000000000000000000005 /* AccessLogFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* AccessLogFormView.swift */; };
+		A10000000000000000000006 /* DatabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* DatabaseService.swift */; };
+		A10000000000000000000007 /* UnlockMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* UnlockMonitor.swift */; };
+		A10000000000000000000008 /* GoogleAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* GoogleAuthService.swift */; };
+		A10000000000000000000009 /* SheetsSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* SheetsSyncService.swift */; };
+		A1000000000000000000000B /* TrustedTimeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000E /* TrustedTimeService.swift */; };
+		A1000000000000000000000C /* SetupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000F /* SetupStore.swift */; };
+		A1000000000000000000000D /* SetupModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* SetupModel.swift */; };
+		A1000000000000000000000E /* SetupWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* SetupWizardView.swift */; };
+		A1000000000000000000000F /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* RootView.swift */; };
+		A10000000000000000000010 /* GoogleOAuthConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* GoogleOAuthConfig.swift */; };
+		A10000000000000000000011 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* KeychainStore.swift */; };
+		A10000000000000000000012 /* LoopbackHTTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* LoopbackHTTPServer.swift */; };
+		A10000000000000000000013 /* GoogleOAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* GoogleOAuthService.swift */; };
+		A1000000000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* Assets.xcassets */; };
+		A10000000000000000000014 /* GoogleOAuth.json in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000017 /* GoogleOAuth.json */; };
+		A10000000000000000000015 /* GoogleOAuth.example.json in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000018 /* GoogleOAuth.example.json */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000000000000000000001 /* AccessLogApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessLogApp.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		A20000000000000000000003 /* AccessRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessRecord.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		A20000000000000000000005 /* AccessLogFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessLogFormView.swift; sourceTree = "<group>"; };
+		A20000000000000000000006 /* DatabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseService.swift; sourceTree = "<group>"; };
+		A20000000000000000000007 /* UnlockMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockMonitor.swift; sourceTree = "<group>"; };
+		A20000000000000000000008 /* GoogleAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleAuthService.swift; sourceTree = "<group>"; };
+		A20000000000000000000009 /* SheetsSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetsSyncService.swift; sourceTree = "<group>"; };
+		A2000000000000000000000E /* TrustedTimeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrustedTimeService.swift; sourceTree = "<group>"; };
+		A2000000000000000000000F /* SetupStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000010 /* SetupModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupModel.swift; sourceTree = "<group>"; };
+		A20000000000000000000011 /* SetupWizardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupWizardView.swift; sourceTree = "<group>"; };
+		A20000000000000000000012 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		A20000000000000000000013 /* GoogleOAuthConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthConfig.swift; sourceTree = "<group>"; };
+		A20000000000000000000014 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000015 /* LoopbackHTTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopbackHTTPServer.swift; sourceTree = "<group>"; };
+		A20000000000000000000016 /* GoogleOAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthService.swift; sourceTree = "<group>"; };
+		A20000000000000000000017 /* GoogleOAuth.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = GoogleOAuth.json; sourceTree = "<group>"; };
+		A20000000000000000000018 /* GoogleOAuth.example.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = GoogleOAuth.example.json; sourceTree = "<group>"; };
+		A2000000000000000000000A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A2000000000000000000000B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A2000000000000000000000C /* AccessLog.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AccessLog.entitlements; sourceTree = "<group>"; };
+		A2000000000000000000000D /* AccessLog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AccessLog.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A30000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A40000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A40000000000000000000002 /* AccessLog */,
+				A40000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A40000000000000000000002 /* AccessLog */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000001 /* AccessLogApp.swift */,
+				A20000000000000000000002 /* AppModel.swift */,
+				A20000000000000000000010 /* SetupModel.swift */,
+				A2000000000000000000000C /* AccessLog.entitlements */,
+				A2000000000000000000000A /* Assets.xcassets */,
+				A40000000000000000000004 /* Models */,
+				A40000000000000000000005 /* Views */,
+				A40000000000000000000006 /* Services */,
+				A40000000000000000000007 /* Resources */,
+			);
+			path = AccessLog;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A2000000000000000000000D /* AccessLog.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000004 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000003 /* AccessRecord.swift */,
+				A20000000000000000000004 /* AppConfig.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000005 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000005 /* AccessLogFormView.swift */,
+				A20000000000000000000011 /* SetupWizardView.swift */,
+				A20000000000000000000012 /* RootView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000006 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000006 /* DatabaseService.swift */,
+				A20000000000000000000007 /* UnlockMonitor.swift */,
+				A20000000000000000000008 /* GoogleAuthService.swift */,
+				A20000000000000000000009 /* SheetsSyncService.swift */,
+				A2000000000000000000000E /* TrustedTimeService.swift */,
+				A2000000000000000000000F /* SetupStore.swift */,
+				A20000000000000000000013 /* GoogleOAuthConfig.swift */,
+				A20000000000000000000014 /* KeychainStore.swift */,
+				A20000000000000000000015 /* LoopbackHTTPServer.swift */,
+				A20000000000000000000016 /* GoogleOAuthService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A40000000000000000000007 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A2000000000000000000000B /* Info.plist */,
+				A20000000000000000000017 /* GoogleOAuth.json */,
+				A20000000000000000000018 /* GoogleOAuth.example.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A50000000000000000000001 /* AccessLog */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A60000000000000000000003 /* Build configuration list for PBXNativeTarget "AccessLog" */;
+			buildPhases = (
+				A50000000000000000000002 /* Sources */,
+				A30000000000000000000001 /* Frameworks */,
+				A50000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AccessLog;
+			productName = AccessLog;
+			productReference = A2000000000000000000000D /* AccessLog.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A70000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					A50000000000000000000001 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+				};
+			};
+			buildConfigurationList = A60000000000000000000001 /* Build configuration list for PBXProject "AccessLog" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A40000000000000000000001;
+			productRefGroup = A40000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A50000000000000000000001 /* AccessLog */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A50000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000000000000000000000A /* Assets.xcassets in Resources */,
+				A10000000000000000000014 /* GoogleOAuth.json in Resources */,
+				A10000000000000000000015 /* GoogleOAuth.example.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A50000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* AccessLogApp.swift in Sources */,
+				A10000000000000000000002 /* AppModel.swift in Sources */,
+				A10000000000000000000003 /* AccessRecord.swift in Sources */,
+				A10000000000000000000004 /* AppConfig.swift in Sources */,
+				A10000000000000000000005 /* AccessLogFormView.swift in Sources */,
+				A10000000000000000000006 /* DatabaseService.swift in Sources */,
+				A10000000000000000000007 /* UnlockMonitor.swift in Sources */,
+				A10000000000000000000008 /* GoogleAuthService.swift in Sources */,
+				A10000000000000000000009 /* SheetsSyncService.swift in Sources */,
+				A1000000000000000000000B /* TrustedTimeService.swift in Sources */,
+				A1000000000000000000000C /* SetupStore.swift in Sources */,
+				A1000000000000000000000D /* SetupModel.swift in Sources */,
+				A1000000000000000000000E /* SetupWizardView.swift in Sources */,
+				A1000000000000000000000F /* RootView.swift in Sources */,
+				A10000000000000000000010 /* GoogleOAuthConfig.swift in Sources */,
+				A10000000000000000000011 /* KeychainStore.swift in Sources */,
+				A10000000000000000000012 /* LoopbackHTTPServer.swift in Sources */,
+				A10000000000000000000013 /* GoogleOAuthService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A80000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A80000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		A80000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = AccessLog/AccessLog.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AccessLog/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.accesslog.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A80000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = AccessLog/AccessLog.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AccessLog/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.accesslog.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A60000000000000000000001 /* Build configuration list for PBXProject "AccessLog" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A80000000000000000000001 /* Debug */,
+				A80000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A60000000000000000000003 /* Build configuration list for PBXNativeTarget "AccessLog" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A80000000000000000000003 /* Debug */,
+				A80000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A70000000000000000000001 /* Project object */;
+}

@@ -1,0 +1,22 @@
+# macOS Access Log — ignore secrets & build artifacts
+
+.DS_Store
+**/.DS_Store
+
+# Google secrets (never commit)
+**/GoogleOAuth.json
+client_secret*.json
+quega-dev*.json
+**/credentials.json
+**/*service-account*.json
+
+# Xcode / build
+AccessLog/build/
+AccessLog/DerivedData/
+**/xcuserdata/
+**/*.xcuserstate
+**/DerivedData/
+
+# Local seed bundles
+**/Seed/credentials.json
+**/Seed/config.json

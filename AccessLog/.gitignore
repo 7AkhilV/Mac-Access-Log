@@ -1,0 +1,15 @@
+.DS_Store
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Secrets — use GoogleOAuth.example.json as the template
+AccessLog/Resources/GoogleOAuth.json
+**/GoogleOAuth.json
+**/credentials.json
+client_secret*.json
+quega-dev*.json
+**/*service-account*.json
+**/Seed/credentials.json
+**/Seed/config.json
