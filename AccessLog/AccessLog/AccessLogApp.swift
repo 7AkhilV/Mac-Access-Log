@@ -6,10 +6,13 @@ struct AccessLogApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        WindowGroup {
+        // Single window (not WindowGroup) — avoids multiple Access Log windows.
+        Window("Access Log", id: "main") {
             RootView()
                 .environmentObject(appDelegate.appModel)
+                .frame(minWidth: 620, minHeight: 640)
         }
+        .defaultSize(width: 620, height: 640)
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
         .commands {
@@ -17,7 +20,6 @@ struct AccessLogApp: App {
             CommandGroup(after: .appInfo) {
                 Button("Run Setup Wizard…") {
                     SetupStore.resetCompletion()
-                    // Relaunch UI into setup by posting a simple notification
                     NotificationCenter.default.post(name: .showAccessLogSetup, object: nil)
                 }
             }
@@ -38,6 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         SetupStore.importBundledSeedIfNeeded()
+        collapseExtraWindows()
 
         if SetupStore.isComplete {
             registerLoginItemIfNeeded()
@@ -54,11 +57,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            guard let window = notification.object as? NSWindow else { return }
+            guard let self,
+                  let window = notification.object as? NSWindow,
+                  AppModel.isMainContentWindow(window) else { return }
             window.delegate = self
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            self?.collapseExtraWindows()
             guard SetupStore.isComplete else { return }
             self?.appModel.presentAccessForm()
         }
@@ -81,8 +87,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if SetupStore.isComplete {
             appModel.presentAccessForm()
+        } else {
+            appModel.presentAccessForm()
         }
         return true
+    }
+
+    /// Keep only one Access Log content window.
+    private func collapseExtraWindows() {
+        let windows = AppModel.mainContentWindows()
+        guard windows.count > 1 else { return }
+        for window in windows.dropFirst() {
+            window.orderOut(nil)
+            window.close()
+        }
     }
 
     private func registerLoginItemIfNeeded() {

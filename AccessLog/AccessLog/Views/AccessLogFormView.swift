@@ -112,7 +112,7 @@ struct AccessLogFormView: View {
             .foregroundStyle(.tertiary)
             .padding(.bottom, 20)
         }
-        .frame(minWidth: 560, idealWidth: 620, minHeight: 560, idealHeight: 620)
+        .frame(width: 620, height: 640)
         .onAppear {
             focusedField = .name
         }

@@ -20,6 +20,20 @@ final class AppModel: ObservableObject {
     /// Avoid hammering the form if multiple unlock notifications fire close together.
     private let presentCooldown: TimeInterval = 2
 
+    static func isMainContentWindow(_ window: NSWindow) -> Bool {
+        // Ignore menu / status / helper chrome; only real content panels.
+        guard window.frame.width >= 280, window.frame.height >= 280 else { return false }
+        let name = String(describing: type(of: window))
+        if name.contains("NSStatusBar") || name.contains("NSMenu") || name.contains("NSPopup") {
+            return false
+        }
+        return window.contentView != nil
+    }
+
+    static func mainContentWindows() -> [NSWindow] {
+        NSApp.windows.filter(isMainContentWindow)
+    }
+
     func presentAccessForm() {
         let now = Date()
         guard now.timeIntervalSince(lastPresentedAt) >= presentCooldown else { return }
@@ -33,27 +47,41 @@ final class AppModel: ObservableObject {
         isSuccess = false
 
         NSApp.activate(ignoringOtherApps: true)
-        for window in NSApp.windows {
-            // Sit above normal apps so the form feels mandatory.
-            window.level = .modalPanel
-            window.collectionBehavior.insert([.moveToActiveSpace, .fullScreenAuxiliary])
-            window.isMovable = false
 
-            // Hide traffic-light close so users submit instead of dismissing.
-            window.standardWindowButton(.closeButton)?.isHidden = true
-            window.standardWindowButton(.miniaturizeButton)?.isHidden = true
-            window.standardWindowButton(.zoomButton)?.isHidden = true
+        // Drop accidental duplicate windows first.
+        let all = Self.mainContentWindows()
+        for window in all.dropFirst() {
+            window.orderOut(nil)
+            window.close()
+        }
 
-            if let screen = NSScreen.main {
-                let visible = screen.visibleFrame
-                let width = min(640, max(560, visible.width * 0.42))
-                let height = min(680, max(580, visible.height * 0.62))
-                window.setContentSize(NSSize(width: width, height: height))
-            }
+        let target = Self.mainContentWindows().first ?? NSApp.windows.first
+        guard let window = target else { return }
 
-            window.makeKeyAndOrderFront(nil)
+        configureGateWindow(window)
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
+    }
+
+    private func configureGateWindow(_ window: NSWindow) {
+        window.level = .modalPanel
+        window.collectionBehavior.insert([.moveToActiveSpace, .fullScreenAuxiliary])
+        window.isMovable = false
+
+        window.standardWindowButton(.closeButton)?.isHidden = true
+        window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+        window.standardWindowButton(.zoomButton)?.isHidden = true
+
+        let width: CGFloat = 620
+        let height: CGFloat = 640
+        window.setContentSize(NSSize(width: width, height: height))
+        if let screen = NSScreen.main {
+            let visible = screen.visibleFrame
+            let x = visible.midX - width / 2
+            let y = visible.midY - height / 2
+            window.setFrame(NSRect(x: x, y: y, width: width, height: height), display: true)
+        } else {
             window.center()
-            window.orderFrontRegardless()
         }
     }
 
@@ -126,7 +154,7 @@ final class AppModel: ObservableObject {
     }
 
     func dismissForm() {
-        for window in NSApp.windows where window.isVisible {
+        for window in Self.mainContentWindows() where window.isVisible {
             window.orderOut(nil)
         }
     }
