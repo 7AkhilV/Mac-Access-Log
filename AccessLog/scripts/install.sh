@@ -50,13 +50,19 @@ if [[ ! -f "$DMG_PATH" ]]; then
 fi
 
 echo "→ Mounting DMG…"
-MOUNT_OUT="$(hdiutil attach "$DMG_PATH" -nobrowse)"
-MOUNT_POINT="$(echo "$MOUNT_OUT" | awk '/\/Volumes\//{print $NF; exit}')"
+MOUNT_OUT="$(hdiutil attach "$DMG_PATH" -nobrowse 2>&1)" || {
+  echo "hdiutil attach failed:"
+  echo "$MOUNT_OUT"
+  exit 1
+}
+# Volume names may contain spaces (e.g. "/Volumes/Access Log").
+MOUNT_POINT="$(echo "$MOUNT_OUT" | sed -n 's|.*\(/Volumes/.*\)|\1|p' | tail -1)"
 if [[ -z "$MOUNT_POINT" || ! -d "$MOUNT_POINT" ]]; then
   echo "Failed to mount DMG."
+  echo "$MOUNT_OUT"
   exit 1
 fi
-
+echo "→ Mounted at: $MOUNT_POINT"
 APP_SRC="$(find "$MOUNT_POINT" -maxdepth 2 -name "${APP_NAME}.app" -type d | head -1)"
 if [[ -z "$APP_SRC" ]]; then
   echo "AccessLog.app not found inside the DMG."
