@@ -12,7 +12,15 @@ APP_NAME="AccessLog"
 REPO="7AkhilV/Mac-Access-Log"
 INSTALL_DIR="/Applications"
 TMP="$(mktemp -d)"
-cleanup() { rm -rf "$TMP"; }
+MOUNT_POINT="$TMP/mnt"
+MOUNTED=0
+
+cleanup() {
+  if [[ "$MOUNTED" -eq 1 ]]; then
+    hdiutil detach "$MOUNT_POINT" -quiet 2>/dev/null || true
+  fi
+  rm -rf "$TMP"
+}
 trap cleanup EXIT
 
 echo "→ Installing Access Log…"
@@ -21,8 +29,10 @@ DMG_PATH="${1:-}"
 
 if [[ -z "$DMG_PATH" ]]; then
   echo "→ Downloading latest release DMG from GitHub…"
-  if ! command -v gh >/dev/null 2>&1; then
-    # Fallback: GitHub API + curl
+  if command -v gh >/dev/null 2>&1; then
+    gh release download --repo "$REPO" --pattern "*.dmg" --dir "$TMP"
+    DMG_PATH="$(print -l "$TMP"/*.dmg(N) | head -1)"
+  else
     API="https://api.github.com/repos/${REPO}/releases/latest"
     DMG_URL="$(curl -fsSL "$API" | python3 -c '
 import json,sys
@@ -38,35 +48,30 @@ for a in rel.get("assets",[]):
     fi
     DMG_PATH="$TMP/AccessLog-Installer.dmg"
     curl -fL "$DMG_URL" -o "$DMG_PATH"
-  else
-    gh release download --repo "$REPO" --pattern "*.dmg" --dir "$TMP"
-    DMG_PATH="$(ls "$TMP"/*.dmg | head -1)"
   fi
 fi
 
-if [[ ! -f "$DMG_PATH" ]]; then
-  echo "DMG not found: $DMG_PATH"
+if [[ -z "$DMG_PATH" || ! -f "$DMG_PATH" ]]; then
+  echo "DMG not found: ${DMG_PATH:-"(empty)"}"
   exit 1
 fi
 
+echo "→ Using DMG: $DMG_PATH ($(du -h "$DMG_PATH" | awk '{print $1}'))"
 echo "→ Mounting DMG…"
-MOUNT_OUT="$(hdiutil attach "$DMG_PATH" -nobrowse 2>&1)" || {
-  echo "hdiutil attach failed:"
-  echo "$MOUNT_OUT"
-  exit 1
-}
-# Volume names may contain spaces (e.g. "/Volumes/Access Log").
-MOUNT_POINT="$(echo "$MOUNT_OUT" | sed -n 's|.*\(/Volumes/.*\)|\1|p' | tail -1)"
-if [[ -z "$MOUNT_POINT" || ! -d "$MOUNT_POINT" ]]; then
-  echo "Failed to mount DMG."
-  echo "$MOUNT_OUT"
+mkdir -p "$MOUNT_POINT"
+# Fixed mountpoint avoids /Volumes names with spaces breaking path parsing.
+if ! hdiutil attach "$DMG_PATH" -nobrowse -readonly -mountpoint "$MOUNT_POINT"; then
+  echo "hdiutil attach failed for: $DMG_PATH"
+  file "$DMG_PATH" || true
   exit 1
 fi
+MOUNTED=1
 echo "→ Mounted at: $MOUNT_POINT"
-APP_SRC="$(find "$MOUNT_POINT" -maxdepth 2 -name "${APP_NAME}.app" -type d | head -1)"
+
+APP_SRC="$(find "$MOUNT_POINT" -maxdepth 3 -name "${APP_NAME}.app" -type d | head -1)"
 if [[ -z "$APP_SRC" ]]; then
-  echo "AccessLog.app not found inside the DMG."
-  hdiutil detach "$MOUNT_POINT" -quiet || true
+  echo "AccessLog.app not found inside the DMG. Contents:"
+  ls -la "$MOUNT_POINT"
   exit 1
 fi
 
@@ -76,6 +81,7 @@ cp -R "$APP_SRC" "${INSTALL_DIR}/"
 
 echo "→ Detaching DMG…"
 hdiutil detach "$MOUNT_POINT" -quiet || true
+MOUNTED=0
 
 # Clear Gatekeeper quarantine so unsigned local builds open without the malware dialog.
 # Only run this for software you trust (this installer from your org / this GitHub repo).
