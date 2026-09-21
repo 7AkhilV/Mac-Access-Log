@@ -25,12 +25,13 @@ final class AppModel: ObservableObject {
     private let newSessionCooldown: TimeInterval = 2
 
     static func isMainContentWindow(_ window: NSWindow) -> Bool {
-        guard window.frame.width >= 280, window.frame.height >= 280 else { return false }
         let name = String(describing: type(of: window))
-        if name.contains("NSStatusBar") || name.contains("NSMenu") || name.contains("NSPopup") {
+        if name.contains("NSStatusBar") || name.contains("NSMenu") || name.contains("NSPopup") || name.contains("NSPanel") {
             return false
         }
-        return window.contentView != nil
+        if window.title.contains("Access Log") { return true }
+        guard window.contentView != nil else { return false }
+        return window.frame.width >= 200 || window.frame.height >= 200
     }
 
     static func mainContentWindows() -> [NSWindow] {
@@ -54,13 +55,24 @@ final class AppModel: ObservableObject {
         isSuccess = false
         isAwaitingSubmission = true
 
+        GateOverlayController.shared.show()
+        applyKioskMode(true)
+        NotificationCenter.default.post(name: .forceOpenMainWindow, object: nil)
         bringFormToFront()
         startFrontmostGuard()
+        reactivateViaOpen()
     }
 
     /// Raise the existing form without wiping what the user already typed.
     func bringFormToFront() {
-        NSApp.activate(ignoringOtherApps: true)
+        activateAggressively()
+        GateOverlayController.shared.show()
+        applyKioskMode(true)
+
+        // SwiftUI may not have created the window yet after a hidden restore.
+        if Self.mainContentWindows().isEmpty {
+            NotificationCenter.default.post(name: .forceOpenMainWindow, object: nil)
+        }
 
         let all = Self.mainContentWindows()
         for window in all.dropFirst() {
@@ -68,12 +80,46 @@ final class AppModel: ObservableObject {
             window.close()
         }
 
-        let target = Self.mainContentWindows().first ?? NSApp.windows.first
-        guard let window = target else { return }
+        guard let window = Self.mainContentWindows().first else {
+            NSApp.requestUserAttention(.criticalRequest)
+            return
+        }
 
+        window.isRestorable = false
+        if window.isMiniaturized {
+            window.deminiaturize(nil)
+        }
         configureGateWindow(window)
         window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
+    }
+
+    private func activateAggressively() {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.unhide(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        NSRunningApplication.current.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+    }
+
+    /// `open -a` is treated more like a user launch and often gets focus after login.
+    private func reactivateViaOpen() {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "com.accesslog.app") else {
+            return
+        }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        NSWorkspace.shared.openApplication(at: url, configuration: configuration)
+    }
+
+    private func applyKioskMode(_ enabled: Bool) {
+        if enabled {
+            NSApp.presentationOptions = [
+                .disableProcessSwitching,
+                .disableAppleMenu
+            ]
+        } else {
+            NSApp.presentationOptions = []
+        }
     }
 
     private func startFrontmostGuard() {
@@ -93,11 +139,14 @@ final class AppModel: ObservableObject {
         frontmostTimer?.invalidate()
         frontmostTimer = nil
         isAwaitingSubmission = false
+        applyKioskMode(false)
+        GateOverlayController.shared.hide()
     }
 
     private func configureGateWindow(_ window: NSWindow) {
-        window.level = .modalPanel
-        window.collectionBehavior.insert([.moveToActiveSpace, .fullScreenAuxiliary, .stationary])
+        window.level = .statusBar + 1
+        window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary, .stationary])
+        window.hidesOnDeactivate = false
         window.isMovable = true
 
         window.standardWindowButton(.closeButton)?.isHidden = true

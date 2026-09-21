@@ -28,6 +28,7 @@ struct AccessLogApp: App {
 
 extension Notification.Name {
     static let showAccessLogSetup = Notification.Name("showAccessLogSetup")
+    static let forceOpenMainWindow = Notification.Name("forceOpenMainWindow")
 }
 
 @MainActor
@@ -39,6 +40,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var loginRetryWork: DispatchWorkItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        UserDefaults.standard.set(false, forKey: "NSQuitAlwaysKeepsWindows")
+        NSWindow.allowsAutomaticWindowTabbing = false
         NSApp.setActivationPolicy(.regular)
         SetupStore.importBundledSeedIfNeeded()
         collapseExtraWindows()
@@ -86,7 +89,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     /// Login Items often start without focus. Keep forcing the form forward for a while after boot.
     private func scheduleLoginRetries() {
         loginRetryWork?.cancel()
-        let delays: [TimeInterval] = [0.3, 1.0, 2.5, 5.0, 8.0, 12.0]
+        let delays: [TimeInterval] = [0.2, 0.8, 2.0, 4.0, 7.0, 12.0, 20.0]
         for delay in delays {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                 guard let self, SetupStore.isComplete else { return }
@@ -126,6 +129,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if SetupStore.isComplete, appModel.isAwaitingSubmission {
             appModel.bringFormToFront()
         }
+    }
+
+    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
+        false
     }
 
     private func collapseExtraWindows() {

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject private var appModel: AppModel
+    @Environment(\.openWindow) private var openWindow
     @StateObject private var setupModel = SetupModel()
     @State private var showSetup: Bool = !SetupStore.isComplete
 
@@ -25,6 +26,9 @@ struct RootView: View {
         .onReceive(NotificationCenter.default.publisher(for: .showAccessLogSetup)) { _ in
             setupModel.refreshFromDisk()
             showSetup = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .forceOpenMainWindow)) { _ in
+            openWindow(id: "main")
         }
     }
 }

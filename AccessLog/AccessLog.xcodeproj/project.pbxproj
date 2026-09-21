@@ -25,6 +25,7 @@
 		A10000000000000000000011 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* KeychainStore.swift */; };
 		A10000000000000000000012 /* LoopbackHTTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* LoopbackHTTPServer.swift */; };
 		A10000000000000000000013 /* GoogleOAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* GoogleOAuthService.swift */; };
+		A10000000000000000000016 /* GateOverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000019 /* GateOverlayController.swift */; };
 		A1000000000000000000000A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* Assets.xcassets */; };
 		A10000000000000000000014 /* GoogleOAuth.json in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000017 /* GoogleOAuth.json */; };
 		A10000000000000000000015 /* GoogleOAuth.example.json in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000018 /* GoogleOAuth.example.json */; };
@@ -49,6 +50,7 @@
 		A20000000000000000000014 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		A20000000000000000000015 /* LoopbackHTTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopbackHTTPServer.swift; sourceTree = "<group>"; };
 		A20000000000000000000016 /* GoogleOAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthService.swift; sourceTree = "<group>"; };
+		A20000000000000000000019 /* GateOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GateOverlayController.swift; sourceTree = "<group>"; };
 		A20000000000000000000017 /* GoogleOAuth.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = GoogleOAuth.json; sourceTree = "<group>"; };
 		A20000000000000000000018 /* GoogleOAuth.example.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = GoogleOAuth.example.json; sourceTree = "<group>"; };
 		A2000000000000000000000A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -132,6 +134,7 @@
 				A20000000000000000000014 /* KeychainStore.swift */,
 				A20000000000000000000015 /* LoopbackHTTPServer.swift */,
 				A20000000000000000000016 /* GoogleOAuthService.swift */,
+				A20000000000000000000019 /* GateOverlayController.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -235,6 +238,7 @@
 				A10000000000000000000011 /* KeychainStore.swift in Sources */,
 				A10000000000000000000012 /* LoopbackHTTPServer.swift in Sources */,
 				A10000000000000000000013 /* GoogleOAuthService.swift in Sources */,
+				A10000000000000000000016 /* GateOverlayController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
