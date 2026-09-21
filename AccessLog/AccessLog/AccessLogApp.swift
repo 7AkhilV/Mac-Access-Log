@@ -1,5 +1,4 @@
 import SwiftUI
-import ServiceManagement
 
 @main
 struct AccessLogApp: App {
@@ -28,7 +27,7 @@ struct AccessLogApp: App {
 
 extension Notification.Name {
     static let showAccessLogSetup = Notification.Name("showAccessLogSetup")
-    static let forceOpenMainWindow = Notification.Name("forceOpenMainWindow")
+    static let openMainWindowIfNeeded = Notification.Name("openMainWindowIfNeeded")
 }
 
 @MainActor
@@ -36,19 +35,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let appModel = AppModel()
     private var unlockMonitor: UnlockMonitor?
     private var windowObserver: NSObjectProtocol?
-    private var resignObserver: NSObjectProtocol?
-    private var loginRetryWork: DispatchWorkItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         UserDefaults.standard.set(false, forKey: "NSQuitAlwaysKeepsWindows")
         NSWindow.allowsAutomaticWindowTabbing = false
         NSApp.setActivationPolicy(.regular)
         SetupStore.importBundledSeedIfNeeded()
-        collapseExtraWindows()
-
-        if SetupStore.isComplete {
-            registerLoginItemIfNeeded()
-        }
+        LoginAutostart.install()
 
         unlockMonitor = UnlockMonitor { [weak self] in
             guard SetupStore.isComplete else { return }
@@ -67,37 +60,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             window.delegate = self
         }
 
-        resignObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.didResignActiveNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self, SetupStore.isComplete, self.appModel.isAwaitingSubmission else { return }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                self.appModel.bringFormToFront()
-            }
-        }
-
-        scheduleLoginRetries()
-
         Task {
             guard SetupStore.isComplete else { return }
             await appModel.syncPendingIfPossible()
         }
+
+        scheduleShowRetries()
     }
 
-    /// Login Items often start without focus. Keep forcing the form forward for a while after boot.
-    private func scheduleLoginRetries() {
-        loginRetryWork?.cancel()
-        let delays: [TimeInterval] = [0.2, 0.8, 2.0, 4.0, 7.0, 12.0, 20.0]
+    /// Login Items start without focus. Keep raising the form until the desktop is ready.
+    private func scheduleShowRetries() {
+        let delays: [TimeInterval] = [0.3, 1.0, 2.5, 5.0, 10.0, 18.0]
         for delay in delays {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                guard let self, SetupStore.isComplete else { return }
-                self.collapseExtraWindows()
-                if self.appModel.isAwaitingSubmission {
-                    self.appModel.bringFormToFront()
+                guard let self else { return }
+                if SetupStore.isComplete {
+                    if self.appModel.isAwaitingSubmission {
+                        self.appModel.bringFormToFront(allowFallback: delay >= 2.5)
+                    } else {
+                        self.appModel.presentAccessForm()
+                    }
                 } else {
-                    self.appModel.presentAccessForm()
+                    self.appModel.bringFormToFront(allowFallback: delay >= 2.5)
                 }
             }
         }
@@ -133,22 +117,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         false
-    }
-
-    private func collapseExtraWindows() {
-        let windows = AppModel.mainContentWindows()
-        guard windows.count > 1 else { return }
-        for window in windows.dropFirst() {
-            window.orderOut(nil)
-            window.close()
-        }
-    }
-
-    private func registerLoginItemIfNeeded() {
-        do {
-            try SMAppService.mainApp.register()
-        } catch {
-            print("Login item registration: \(error.localizedDescription)")
-        }
     }
 }

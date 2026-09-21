@@ -156,15 +156,11 @@ final class SetupModel: ObservableObject {
     }
 
     func registerLoginItem() {
-        do {
-            try SMAppService.mainApp.register()
-            loginItemOK = SMAppService.mainApp.status == .enabled
-            statusMessage = loginItemOK
-                ? "Open at Login enabled."
-                : "Login item requested. Check System Settings → Login Items if needed."
-        } catch {
-            statusMessage = "Login item: \(error.localizedDescription)"
-        }
+        LoginAutostart.install()
+        loginItemOK = SMAppService.mainApp.status == .enabled
+        statusMessage = loginItemOK
+            ? "Open at Login enabled."
+            : "Login startup installed. Check System Settings → Login Items if needed."
     }
 
     func runConnectionTest() {

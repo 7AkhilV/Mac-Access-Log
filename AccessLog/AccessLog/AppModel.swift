@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import Foundation
+import SwiftUI
 
 @MainActor
 final class AppModel: ObservableObject {
@@ -20,6 +21,7 @@ final class AppModel: ObservableObject {
     private let syncService = SheetsSyncService()
     private var lastNewSessionAt: Date = .distantPast
     private var frontmostTimer: Timer?
+    private var fallbackWindow: NSWindow?
 
     /// Don't start a brand-new empty form more than once every 2s.
     private let newSessionCooldown: TimeInterval = 2
@@ -55,33 +57,25 @@ final class AppModel: ObservableObject {
         isSuccess = false
         isAwaitingSubmission = true
 
-        GateOverlayController.shared.show()
-        applyKioskMode(true)
-        NotificationCenter.default.post(name: .forceOpenMainWindow, object: nil)
         bringFormToFront()
         startFrontmostGuard()
-        reactivateViaOpen()
     }
 
     /// Raise the existing form without wiping what the user already typed.
-    func bringFormToFront() {
-        activateAggressively()
-        GateOverlayController.shared.show()
-        applyKioskMode(true)
+    func bringFormToFront(allowFallback: Bool = false) {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.unhide(nil)
+        NSApp.activate(ignoringOtherApps: true)
 
-        // SwiftUI may not have created the window yet after a hidden restore.
         if Self.mainContentWindows().isEmpty {
-            NotificationCenter.default.post(name: .forceOpenMainWindow, object: nil)
-        }
-
-        let all = Self.mainContentWindows()
-        for window in all.dropFirst() {
-            window.orderOut(nil)
-            window.close()
+            NotificationCenter.default.post(name: .openMainWindowIfNeeded, object: nil)
+            if allowFallback {
+                showFallbackWindowIfNeeded()
+            }
         }
 
         guard let window = Self.mainContentWindows().first else {
-            NSApp.requestUserAttention(.criticalRequest)
+            NSApp.requestUserAttention(.informationalRequest)
             return
         }
 
@@ -92,34 +86,6 @@ final class AppModel: ObservableObject {
         configureGateWindow(window)
         window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
-    }
-
-    private func activateAggressively() {
-        NSApp.setActivationPolicy(.regular)
-        NSApp.unhide(nil)
-        NSApp.activate(ignoringOtherApps: true)
-        NSRunningApplication.current.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
-    }
-
-    /// `open -a` is treated more like a user launch and often gets focus after login.
-    private func reactivateViaOpen() {
-        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "com.accesslog.app") else {
-            return
-        }
-        let configuration = NSWorkspace.OpenConfiguration()
-        configuration.activates = true
-        NSWorkspace.shared.openApplication(at: url, configuration: configuration)
-    }
-
-    private func applyKioskMode(_ enabled: Bool) {
-        if enabled {
-            NSApp.presentationOptions = [
-                .disableProcessSwitching,
-                .disableAppleMenu
-            ]
-        } else {
-            NSApp.presentationOptions = []
-        }
     }
 
     private func startFrontmostGuard() {
@@ -139,13 +105,34 @@ final class AppModel: ObservableObject {
         frontmostTimer?.invalidate()
         frontmostTimer = nil
         isAwaitingSubmission = false
-        applyKioskMode(false)
-        GateOverlayController.shared.hide()
+    }
+
+    /// SwiftUI may skip creating `Window("main")` after a login-item launch.
+    private func showFallbackWindowIfNeeded() {
+        if let fallbackWindow, fallbackWindow.isVisible {
+            fallbackWindow.makeKeyAndOrderFront(nil)
+            return
+        }
+        if !Self.mainContentWindows().isEmpty { return }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 620, height: 640),
+            styleMask: [.titled, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Access Log"
+        window.titlebarAppearsTransparent = true
+        window.isRestorable = false
+        window.contentView = NSHostingView(rootView: AccessLogFormView().environmentObject(self))
+        window.center()
+        fallbackWindow = window
+        window.makeKeyAndOrderFront(nil)
     }
 
     private func configureGateWindow(_ window: NSWindow) {
-        window.level = .statusBar + 1
-        window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary, .stationary])
+        window.level = .floating
+        window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary])
         window.hidesOnDeactivate = false
         window.isMovable = true
 
