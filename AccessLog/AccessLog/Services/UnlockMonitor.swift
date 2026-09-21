@@ -1,7 +1,7 @@
 import AppKit
 import Foundation
 
-/// Observes macOS screen unlock and session activation so the access form can be shown.
+/// Observes unlock, wake, and session-active so the access form can be shown.
 final class UnlockMonitor {
     private let onUnlock: () -> Void
     private var observers: [NSObjectProtocol] = []
@@ -18,8 +18,8 @@ final class UnlockMonitor {
         stop()
 
         let dnc = DistributedNotificationCenter.default()
+        let workspace = NSWorkspace.shared.notificationCenter
 
-        // Undocumented but widely used unlock signal
         let unlocked = dnc.addObserver(
             forName: NSNotification.Name("com.apple.screenIsUnlocked"),
             object: nil,
@@ -36,13 +36,30 @@ final class UnlockMonitor {
             self?.onUnlock()
         }
 
-        observers = [unlocked, sessionActive]
+        let wake = workspace.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.onUnlock()
+        }
+
+        let screensWake = workspace.addObserver(
+            forName: NSWorkspace.screensDidWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.onUnlock()
+        }
+
+        observers = [unlocked, sessionActive, wake, screensWake]
     }
 
     func stop() {
         for observer in observers {
             DistributedNotificationCenter.default().removeObserver(observer)
             NotificationCenter.default.removeObserver(observer)
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
         observers.removeAll()
     }
