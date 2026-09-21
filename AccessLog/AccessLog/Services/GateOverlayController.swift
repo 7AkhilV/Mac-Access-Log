@@ -17,10 +17,10 @@ final class GateOverlayController {
                 backing: .buffered,
                 defer: false
             )
-            panel.level = .statusBar
-            panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+            panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.normalWindow)) + 1)
+            panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
             panel.isOpaque = false
-            panel.backgroundColor = NSColor.black.withAlphaComponent(0.55)
+            panel.backgroundColor = NSColor.black.withAlphaComponent(0.35)
             panel.hasShadow = false
             panel.ignoresMouseEvents = false
             panel.hidesOnDeactivate = false

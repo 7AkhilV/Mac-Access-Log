@@ -19,7 +19,9 @@ struct RootView: View {
         }
         .onAppear {
             SetupStore.importBundledSeedIfNeeded()
-            if !SetupStore.isComplete {
+            if SetupStore.isComplete {
+                appModel.presentAccessForm()
+            } else {
                 showSetup = true
             }
         }
@@ -27,8 +29,10 @@ struct RootView: View {
             setupModel.refreshFromDisk()
             showSetup = true
         }
-        .onReceive(NotificationCenter.default.publisher(for: .forceOpenMainWindow)) { _ in
-            openWindow(id: "main")
+        .onReceive(NotificationCenter.default.publisher(for: .openMainWindowIfNeeded)) { _ in
+            if AppModel.mainContentWindows().isEmpty {
+                openWindow(id: "main")
+            }
         }
     }
 }

@@ -28,7 +28,7 @@ final class UnlockMonitor {
             self?.onUnlock()
         }
 
-        let sessionActive = NotificationCenter.default.addObserver(
+        let sessionActive = workspace.addObserver(
             forName: NSWorkspace.sessionDidBecomeActiveNotification,
             object: nil,
             queue: .main
