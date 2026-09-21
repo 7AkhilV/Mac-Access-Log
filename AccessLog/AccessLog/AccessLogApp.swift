@@ -6,7 +6,6 @@ struct AccessLogApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        // Single window (not WindowGroup) — avoids multiple Access Log windows.
         Window("Access Log", id: "main") {
             RootView()
                 .environmentObject(appDelegate.appModel)
@@ -36,6 +35,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let appModel = AppModel()
     private var unlockMonitor: UnlockMonitor?
     private var windowObserver: NSObjectProtocol?
+    private var resignObserver: NSObjectProtocol?
+    private var loginRetryWork: DispatchWorkItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
@@ -63,11 +64,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             window.delegate = self
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-            self?.collapseExtraWindows()
-            guard SetupStore.isComplete else { return }
-            self?.appModel.presentAccessForm()
+        resignObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self, SetupStore.isComplete, self.appModel.isAwaitingSubmission else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                self.appModel.bringFormToFront()
+            }
         }
+
+        scheduleLoginRetries()
 
         Task {
             guard SetupStore.isComplete else { return }
@@ -75,8 +83,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
+    /// Login Items often start without focus. Keep forcing the form forward for a while after boot.
+    private func scheduleLoginRetries() {
+        loginRetryWork?.cancel()
+        let delays: [TimeInterval] = [0.3, 1.0, 2.5, 5.0, 8.0, 12.0]
+        for delay in delays {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self, SetupStore.isComplete else { return }
+                self.collapseExtraWindows()
+                if self.appModel.isAwaitingSubmission {
+                    self.appModel.bringFormToFront()
+                } else {
+                    self.appModel.presentAccessForm()
+                }
+            }
+        }
+    }
+
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        sender.orderOut(nil)
+        if appModel.isAwaitingSubmission {
+            appModel.bringFormToFront()
+        } else {
+            sender.orderOut(nil)
+        }
         return false
     }
 
@@ -85,15 +114,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if SetupStore.isComplete {
-            appModel.presentAccessForm()
+        if appModel.isAwaitingSubmission {
+            appModel.bringFormToFront()
         } else {
             appModel.presentAccessForm()
         }
         return true
     }
 
-    /// Keep only one Access Log content window.
+    func applicationDidBecomeActive(_ notification: Notification) {
+        if SetupStore.isComplete, appModel.isAwaitingSubmission {
+            appModel.bringFormToFront()
+        }
+    }
+
     private func collapseExtraWindows() {
         let windows = AppModel.mainContentWindows()
         guard windows.count > 1 else { return }

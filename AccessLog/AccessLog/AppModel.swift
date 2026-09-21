@@ -13,15 +13,18 @@ final class AppModel: ObservableObject {
     @Published var isSubmitting: Bool = false
     @Published var isSyncing: Bool = false
 
+    /// True from login/unlock until a successful submit. Used to keep the form in front.
+    @Published private(set) var isAwaitingSubmission = false
+
     private let database = DatabaseService.shared
     private let syncService = SheetsSyncService()
-    private var lastPresentedAt: Date = .distantPast
+    private var lastNewSessionAt: Date = .distantPast
+    private var frontmostTimer: Timer?
 
-    /// Avoid hammering the form if multiple unlock notifications fire close together.
-    private let presentCooldown: TimeInterval = 2
+    /// Don't start a brand-new empty form more than once every 2s.
+    private let newSessionCooldown: TimeInterval = 2
 
     static func isMainContentWindow(_ window: NSWindow) -> Bool {
-        // Ignore menu / status / helper chrome; only real content panels.
         guard window.frame.width >= 280, window.frame.height >= 280 else { return false }
         let name = String(describing: type(of: window))
         if name.contains("NSStatusBar") || name.contains("NSMenu") || name.contains("NSPopup") {
@@ -34,10 +37,14 @@ final class AppModel: ObservableObject {
         NSApp.windows.filter(isMainContentWindow)
     }
 
+    /// New unlock/login session: reset fields and force the form on screen.
     func presentAccessForm() {
         let now = Date()
-        guard now.timeIntervalSince(lastPresentedAt) >= presentCooldown else { return }
-        lastPresentedAt = now
+        if now.timeIntervalSince(lastNewSessionAt) < newSessionCooldown, isAwaitingSubmission {
+            bringFormToFront()
+            return
+        }
+        lastNewSessionAt = now
 
         name = ""
         purpose = ""
@@ -45,10 +52,16 @@ final class AppModel: ObservableObject {
         purposeError = nil
         statusMessage = nil
         isSuccess = false
+        isAwaitingSubmission = true
 
+        bringFormToFront()
+        startFrontmostGuard()
+    }
+
+    /// Raise the existing form without wiping what the user already typed.
+    func bringFormToFront() {
         NSApp.activate(ignoringOtherApps: true)
 
-        // Drop accidental duplicate windows first.
         let all = Self.mainContentWindows()
         for window in all.dropFirst() {
             window.orderOut(nil)
@@ -63,10 +76,29 @@ final class AppModel: ObservableObject {
         window.orderFrontRegardless()
     }
 
+    private func startFrontmostGuard() {
+        frontmostTimer?.invalidate()
+        frontmostTimer = Timer.scheduledTimer(withTimeInterval: 1.2, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.isAwaitingSubmission, !self.isSubmitting else { return }
+                self.bringFormToFront()
+            }
+        }
+        if let frontmostTimer {
+            RunLoop.main.add(frontmostTimer, forMode: .common)
+        }
+    }
+
+    private func stopFrontmostGuard() {
+        frontmostTimer?.invalidate()
+        frontmostTimer = nil
+        isAwaitingSubmission = false
+    }
+
     private func configureGateWindow(_ window: NSWindow) {
         window.level = .modalPanel
-        window.collectionBehavior.insert([.moveToActiveSpace, .fullScreenAuxiliary])
-        window.isMovable = false
+        window.collectionBehavior.insert([.moveToActiveSpace, .fullScreenAuxiliary, .stationary])
+        window.isMovable = true
 
         window.standardWindowButton(.closeButton)?.isHidden = true
         window.standardWindowButton(.miniaturizeButton)?.isHidden = true
@@ -74,13 +106,13 @@ final class AppModel: ObservableObject {
 
         let width: CGFloat = 620
         let height: CGFloat = 640
-        window.setContentSize(NSSize(width: width, height: height))
         if let screen = NSScreen.main {
             let visible = screen.visibleFrame
             let x = visible.midX - width / 2
             let y = visible.midY - height / 2
             window.setFrame(NSRect(x: x, y: y, width: width, height: height), display: true)
         } else {
+            window.setContentSize(NSSize(width: width, height: height))
             window.center()
         }
     }
@@ -133,7 +165,6 @@ final class AppModel: ObservableObject {
                 case .failed(let message):
                     statusMessage = "✓ Saved locally. Sync failed: \(message)"
                     isSuccess = false
-                    // Still saved locally — close so unlock flow isn't blocked.
                     dismissFormSoon()
                 }
             } catch {
@@ -147,6 +178,7 @@ final class AppModel: ObservableObject {
 
     /// Hides the form after a short success flash; app stays running for the next unlock.
     private func dismissFormSoon(after delay: TimeInterval = 0.9) {
+        stopFrontmostGuard()
         Task {
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             dismissForm()
@@ -154,6 +186,7 @@ final class AppModel: ObservableObject {
     }
 
     func dismissForm() {
+        stopFrontmostGuard()
         for window in Self.mainContentWindows() where window.isVisible {
             window.orderOut(nil)
         }
