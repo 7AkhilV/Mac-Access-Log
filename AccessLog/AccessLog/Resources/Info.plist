@@ -26,5 +26,9 @@
 	<string>Copyright © 2026. All rights reserved.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSQuitAlwaysKeepsWindows</key>
+	<false/>
+	<key>LSUIElement</key>
+	<false/>
 </dict>
 </plist>
