@@ -155,7 +155,11 @@ actor GoogleOAuthService {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw GoogleOAuthError.tokenExchangeFailed(String(data: data, encoding: .utf8) ?? "HTTP error")
+            let message = String(data: data, encoding: .utf8) ?? "HTTP error"
+            if message.contains("invalid_grant") {
+                signOut()
+            }
+            throw GoogleOAuthError.tokenExchangeFailed(message)
         }
         return try JSONDecoder().decode(TokenResponse.self, from: data)
     }

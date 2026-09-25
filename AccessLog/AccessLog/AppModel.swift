@@ -201,7 +201,7 @@ final class AppModel: ObservableObject {
                 case .failed(let message):
                     statusMessage = "✓ Saved locally. Sync failed: \(message)"
                     isSuccess = false
-                    dismissFormSoon()
+                    dismissFormSoon(after: 10)
                 }
             } catch {
                 statusMessage = "Could not save locally: \(error.localizedDescription)"
