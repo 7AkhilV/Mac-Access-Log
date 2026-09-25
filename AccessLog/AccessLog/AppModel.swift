@@ -243,7 +243,26 @@ final class AppModel: ObservableObject {
             _ = try await syncService.syncPending()
             return .synced
         } catch {
+            if Self.isExpiredAuth(error), !SetupStore.hasCredentials {
+                do {
+                    statusMessage = "Google login expired. Sign in again in the browser…"
+                    _ = try await GoogleOAuthService.shared.signIn()
+                    _ = try await syncService.syncPending()
+                    return .synced
+                } catch {
+                    return .failed(error.localizedDescription)
+                }
+            }
             return .failed(error.localizedDescription)
         }
+    }
+
+    private static func isExpiredAuth(_ error: Error) -> Bool {
+        let text = error.localizedDescription.lowercased()
+        return text.contains("expired")
+            || text.contains("invalid_grant")
+            || text.contains("unauthenticated")
+            || text.contains("401")
+            || text.contains("revoked")
     }
 }
