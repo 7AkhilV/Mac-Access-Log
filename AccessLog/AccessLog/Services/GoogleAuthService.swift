@@ -33,16 +33,26 @@ enum GoogleAuthError: LocalizedError {
     }
 }
 
-/// Resolves a Google access token: prefers signed-in user OAuth, falls back to service account.
+/// Resolves a Google access token.
+/// Service-account `credentials.json` is the default (it does not expire).
+/// Personal Google sign-in is only used when no service account is installed.
 actor GoogleAuthService {
     private var cachedToken: String?
     private var expiry: Date = .distantPast
 
     func accessToken() async throws -> String {
-        if KeychainStore.load() != nil {
-            return try await GoogleOAuthService.shared.accessToken()
+        if FileManager.default.fileExists(atPath: AppPaths.credentialsURL.path) {
+            return try await serviceAccountAccessToken()
         }
-        return try await serviceAccountAccessToken()
+
+        do {
+            return try await GoogleOAuthService.shared.accessToken()
+        } catch {
+            if FileManager.default.fileExists(atPath: AppPaths.credentialsURL.path) {
+                return try await serviceAccountAccessToken()
+            }
+            throw error
+        }
     }
 
     private func serviceAccountAccessToken() async throws -> String {

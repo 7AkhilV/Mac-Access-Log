@@ -16,6 +16,11 @@ struct AccessLogApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {}
             CommandGroup(after: .appInfo) {
+                Button("Sync Pending to Google Sheet…") {
+                    Task {
+                        await appDelegate.syncPendingFromMenu()
+                    }
+                }
                 Button("Run Setup Wizard…") {
                     SetupStore.resetCompletion()
                     NotificationCenter.default.post(name: .showAccessLogSetup, object: nil)
@@ -117,5 +122,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         false
+    }
+
+    func syncPendingFromMenu() async {
+        appModel.bringFormToFront()
+        appModel.statusMessage = "Syncing pending rows…"
+        let result = await appModel.syncPendingIfPossible()
+        switch result {
+        case .synced:
+            appModel.statusMessage = "✓ Pending rows sent to Google Sheet."
+            appModel.isSuccess = true
+        case .failed(let message):
+            appModel.statusMessage = "Sync failed: \(message)"
+            appModel.isSuccess = false
+        }
     }
 }

@@ -37,7 +37,7 @@ final class SetupModel: ObservableObject {
     init() {
         SetupStore.importBundledSeedIfNeeded()
         refreshFromDisk()
-        if GoogleOAuthService.isSignedIn {
+        if SetupStore.hasCredentials || GoogleOAuthService.isSignedIn {
             step = SetupStore.hasSpreadsheetId ? .test : .spreadsheet
         }
     }

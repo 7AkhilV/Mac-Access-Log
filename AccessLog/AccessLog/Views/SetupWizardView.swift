@@ -45,29 +45,39 @@ struct SetupWizardView: View {
                 Text("After Mac login/unlock, Access Log asks for Name + Purpose and syncs to your Google Sheet.")
                 Text("You’ll:")
                     .fontWeight(.medium)
-                labeled("1", "Sign in with your Google account")
+                labeled("1", SetupStore.hasCredentials
+                    ? "Use the bundled service account (does not expire)"
+                    : "Sign in with your Google account")
                 labeled("2", "Create a new Sheet (or paste an existing Sheet link)")
                 labeled("3", "Run a quick connection test")
             }
 
         case .signIn:
             VStack(alignment: .leading, spacing: 12) {
-                Text("Sign in so Access Log can write to your spreadsheet only.")
-                if setup.signedInEmail.isEmpty {
-                    Button(setup.isBusy ? "Waiting for Google…" : "Sign in with Google") {
-                        setup.signInWithGoogle()
-                    }
-                    .disabled(setup.isBusy)
-                    .keyboardShortcut(.defaultAction)
-                } else {
-                    Label("Signed in as \(setup.signedInEmail)", systemImage: "checkmark.circle.fill")
+                if SetupStore.hasCredentials {
+                    Label("Using the company service account. This login does not expire.", systemImage: "checkmark.circle.fill")
                         .foregroundStyle(.green)
-                    Button("Sign out") { setup.signOut() }
+                    Text("Google sign-in is optional. The service account writes to the shared Sheet.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Sign in so Access Log can write to your spreadsheet only.")
+                    if setup.signedInEmail.isEmpty {
+                        Button(setup.isBusy ? "Waiting for Google…" : "Sign in with Google") {
+                            setup.signInWithGoogle()
+                        }
                         .disabled(setup.isBusy)
+                        .keyboardShortcut(.defaultAction)
+                    } else {
+                        Label("Signed in as \(setup.signedInEmail)", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Button("Sign out") { setup.signOut() }
+                            .disabled(setup.isBusy)
+                    }
+                    Text("A browser window will open. Approve Sheets access, then return here.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                Text("A browser window will open. Approve Sheets access, then return here.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
             }
 
         case .spreadsheet:
