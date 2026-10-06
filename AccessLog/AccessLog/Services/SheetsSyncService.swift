@@ -135,16 +135,31 @@ actor SheetsSyncService {
         let pending = try database.pendingRecords()
         guard !pending.isEmpty else { return 0 }
 
-        let token = try await auth.accessToken()
+        var token = try await auth.accessToken()
         var syncedCount = 0
+        var didRetryAuth = false
 
         for record in pending {
-            try await append(record: record, config: config, token: token)
+            do {
+                try await append(record: record, config: config, token: token)
+            } catch {
+                guard !didRetryAuth, Self.isTransientAuthFailure(error) else { throw error }
+                didRetryAuth = true
+                token = try await auth.accessToken(forceRefresh: true)
+                try await append(record: record, config: config, token: token)
+            }
             try database.markSynced(id: record.id)
             syncedCount += 1
         }
 
         return syncedCount
+    }
+
+    private static func isTransientAuthFailure(_ error: Error) -> Bool {
+        let text = error.localizedDescription.lowercased()
+        return text.contains("401")
+            || text.contains("expired")
+            || text.contains("unauthenticated")
     }
 
     private func append(record: AccessRecord, config: AppConfig, token: String) async throws {

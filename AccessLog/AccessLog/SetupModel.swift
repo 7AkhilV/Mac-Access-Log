@@ -1,13 +1,13 @@
 import AppKit
 import Combine
 import Foundation
-import ServiceManagement
+import UniformTypeIdentifiers
 
 @MainActor
 final class SetupModel: ObservableObject {
     enum Step: Int, CaseIterable {
         case welcome = 0
-        case signIn = 1
+        case credentials = 1
         case spreadsheet = 2
         case test = 3
         case done = 4
@@ -15,7 +15,7 @@ final class SetupModel: ObservableObject {
         var title: String {
             switch self {
             case .welcome: return "Welcome"
-            case .signIn: return "Sign in with Google"
+            case .credentials: return "Service account"
             case .spreadsheet: return "Your spreadsheet"
             case .test: return "Test connection"
             case .done: return "Done"
@@ -28,7 +28,7 @@ final class SetupModel: ObservableObject {
     @Published var sheetName: String = "Access Logs"
     @Published var statusMessage: String?
     @Published var isBusy: Bool = false
-    @Published var signedInEmail: String = ""
+    @Published var serviceAccountEmail: String = ""
     @Published var testPassed: Bool = false
     @Published var loginItemOK: Bool = false
 
@@ -37,13 +37,10 @@ final class SetupModel: ObservableObject {
     init() {
         SetupStore.importBundledSeedIfNeeded()
         refreshFromDisk()
-        if SetupStore.hasCredentials || GoogleOAuthService.isSignedIn {
-            step = SetupStore.hasSpreadsheetId ? .test : .spreadsheet
-        }
     }
 
     func refreshFromDisk() {
-        signedInEmail = GoogleOAuthService.signedInEmail ?? ""
+        serviceAccountEmail = SetupStore.serviceAccountEmail ?? ""
         if let config = try? ConfigStore.load() {
             if sheetInput.isEmpty, !config.spreadsheetId.isEmpty {
                 sheetInput = config.spreadsheetId
@@ -52,24 +49,24 @@ final class SetupModel: ObservableObject {
                 sheetName = config.sheetName
             }
         }
-        loginItemOK = SMAppService.mainApp.status == .enabled
+        loginItemOK = LoginAutostart.isInstalled
     }
 
     func goNext() {
         statusMessage = nil
         switch step {
         case .welcome:
-            step = .signIn
-        case .signIn:
-            guard GoogleOAuthService.isSignedIn || SetupStore.hasCredentials else {
-                statusMessage = "Sign in with Google to continue."
+            step = .credentials
+        case .credentials:
+            guard SetupStore.hasCredentials else {
+                statusMessage = "Choose a service-account JSON to continue."
                 return
             }
             step = .spreadsheet
         case .spreadsheet:
             saveSpreadsheetConfig()
             guard SetupStore.hasSpreadsheetId else {
-                statusMessage = "Create a sheet or paste your Sheet link."
+                statusMessage = "Paste your Sheet link to continue."
                 return
             }
             step = .test
@@ -92,47 +89,32 @@ final class SetupModel: ObservableObject {
         }
     }
 
-    func signInWithGoogle() {
-        isBusy = true
-        statusMessage = "Browser opening for Google sign-in…"
-        Task {
-            do {
-                let email = try await GoogleOAuthService.shared.signIn()
-                signedInEmail = email
-                statusMessage = "Signed in as \(email)"
-            } catch {
-                statusMessage = "Sign-in failed: \(error.localizedDescription)"
-            }
-            isBusy = false
-        }
-    }
+    func importCredentials() {
+        let panel = NSOpenPanel()
+        panel.title = "Choose service-account JSON"
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
 
-    func signOut() {
-        Task {
-            await GoogleOAuthService.shared.signOut()
-            signedInEmail = ""
+        do {
+            let data = try Data(contentsOf: url)
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  json["type"] as? String == "service_account",
+                  let email = json["client_email"] as? String,
+                  !email.isEmpty else {
+                statusMessage = "That file is not a Google service-account JSON."
+                return
+            }
+            if FileManager.default.fileExists(atPath: AppPaths.credentialsURL.path) {
+                try FileManager.default.removeItem(at: AppPaths.credentialsURL)
+            }
+            try data.write(to: AppPaths.credentialsURL, options: .atomic)
+            serviceAccountEmail = email
             testPassed = false
-            SetupStore.resetCompletion()
-            statusMessage = "Signed out."
-        }
-    }
-
-    func createSpreadsheet() {
-        isBusy = true
-        statusMessage = "Creating Google Sheet…"
-        Task {
-            do {
-                let config = try await syncService.createAccessLogSpreadsheet()
-                sheetInput = config.spreadsheetId
-                sheetName = config.sheetName
-                statusMessage = "Created sheet. ID saved."
-                if let url = URL(string: "https://docs.google.com/spreadsheets/d/\(config.spreadsheetId)/edit") {
-                    NSWorkspace.shared.open(url)
-                }
-            } catch {
-                statusMessage = "Could not create sheet: \(error.localizedDescription)"
-            }
-            isBusy = false
+            statusMessage = "Saved service account \(email)"
+        } catch {
+            statusMessage = "Could not save credentials: \(error.localizedDescription)"
         }
     }
 
@@ -156,11 +138,10 @@ final class SetupModel: ObservableObject {
     }
 
     func registerLoginItem() {
-        LoginAutostart.install()
-        loginItemOK = SMAppService.mainApp.status == .enabled
+        loginItemOK = LoginAutostart.install()
         statusMessage = loginItemOK
-            ? "Open at Login enabled."
-            : "Login startup installed. Check System Settings → Login Items if needed."
+            ? "Opens automatically at login."
+            : "Could not install login startup. Open the app once, then check System Settings → Login Items."
     }
 
     func runConnectionTest() {

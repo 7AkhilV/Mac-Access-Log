@@ -4,15 +4,20 @@ enum SetupStore {
     private static let completedKey = "accessLog.setupCompleted"
 
     static var isComplete: Bool {
-        UserDefaults.standard.bool(forKey: completedKey) && isSignedIn && hasSpreadsheetId
-    }
-
-    static var isSignedIn: Bool {
-        GoogleOAuthService.isSignedIn || hasCredentials
+        UserDefaults.standard.bool(forKey: completedKey) && hasCredentials && hasSpreadsheetId
     }
 
     static var hasCredentials: Bool {
         FileManager.default.fileExists(atPath: AppPaths.credentialsURL.path)
+    }
+
+    static var serviceAccountEmail: String? {
+        guard hasCredentials,
+              let data = try? Data(contentsOf: AppPaths.credentialsURL),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let email = json["client_email"] as? String,
+              !email.isEmpty else { return nil }
+        return email
     }
 
     static var hasSpreadsheetId: Bool {

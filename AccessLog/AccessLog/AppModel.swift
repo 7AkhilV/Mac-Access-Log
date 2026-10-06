@@ -57,7 +57,7 @@ final class AppModel: ObservableObject {
         isSuccess = false
         isAwaitingSubmission = true
 
-        bringFormToFront()
+        bringFormToFront(allowFallback: true)
         startFrontmostGuard()
     }
 
@@ -65,20 +65,35 @@ final class AppModel: ObservableObject {
     func bringFormToFront(allowFallback: Bool = false) {
         NSApp.setActivationPolicy(.regular)
         NSApp.unhide(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        activateApp()
 
-        if Self.mainContentWindows().isEmpty {
-            NotificationCenter.default.post(name: .openMainWindowIfNeeded, object: nil)
-            if allowFallback {
-                showFallbackWindowIfNeeded()
-            }
+        let swiftUIWindows = Self.mainContentWindows().filter { $0 !== fallbackWindow }
+        if let window = swiftUIWindows.first {
+            reveal(window)
         }
 
-        guard let window = Self.mainContentWindows().first else {
-            NSApp.requestUserAttention(.informationalRequest)
+        if swiftUIWindows.contains(where: \.isVisible) {
+            fallbackWindow?.orderOut(nil)
             return
         }
 
+        NotificationCenter.default.post(name: .openMainWindowIfNeeded, object: nil)
+        if allowFallback {
+            showFallbackWindowIfNeeded()
+        } else if swiftUIWindows.isEmpty {
+            NSApp.requestUserAttention(.informationalRequest)
+        }
+    }
+
+    private func activateApp() {
+        if #available(macOS 14.0, *) {
+            NSRunningApplication.current.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+
+    private func reveal(_ window: NSWindow) {
         window.isRestorable = false
         if window.isMiniaturized {
             window.deminiaturize(nil)
@@ -93,7 +108,7 @@ final class AppModel: ObservableObject {
         frontmostTimer = Timer.scheduledTimer(withTimeInterval: 1.2, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self, self.isAwaitingSubmission, !self.isSubmitting else { return }
-                self.bringFormToFront()
+                self.bringFormToFront(allowFallback: true)
             }
         }
         if let frontmostTimer {
@@ -107,27 +122,32 @@ final class AppModel: ObservableObject {
         isAwaitingSubmission = false
     }
 
-    /// SwiftUI may skip creating `Window("main")` after a login-item launch.
+    /// SwiftUI often skips `Window("main")` when the app was started at login.
+    /// This AppKit window does not depend on that scene already existing.
     private func showFallbackWindowIfNeeded() {
-        if let fallbackWindow, fallbackWindow.isVisible {
-            fallbackWindow.makeKeyAndOrderFront(nil)
+        if Self.mainContentWindows().contains(where: { $0 !== fallbackWindow && $0.isVisible }) {
+            fallbackWindow?.orderOut(nil)
             return
         }
-        if !Self.mainContentWindows().isEmpty { return }
+        if let fallbackWindow {
+            reveal(fallbackWindow)
+            return
+        }
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 620, height: 640),
-            styleMask: [.titled, .fullSizeContentView],
+            styleMask: [.titled, .closable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         window.title = "Access Log"
         window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.isReleasedWhenClosed = false
         window.isRestorable = false
-        window.contentView = NSHostingView(rootView: AccessLogFormView().environmentObject(self))
-        window.center()
+        window.contentView = NSHostingView(rootView: RootView().environmentObject(self))
         fallbackWindow = window
-        window.makeKeyAndOrderFront(nil)
+        reveal(window)
     }
 
     private func configureGateWindow(_ window: NSWindow) {
@@ -243,26 +263,7 @@ final class AppModel: ObservableObject {
             _ = try await syncService.syncPending()
             return .synced
         } catch {
-            if Self.isExpiredAuth(error), !SetupStore.hasCredentials {
-                do {
-                    statusMessage = "Google login expired. Sign in again in the browser…"
-                    _ = try await GoogleOAuthService.shared.signIn()
-                    _ = try await syncService.syncPending()
-                    return .synced
-                } catch {
-                    return .failed(error.localizedDescription)
-                }
-            }
             return .failed(error.localizedDescription)
         }
-    }
-
-    private static func isExpiredAuth(_ error: Error) -> Bool {
-        let text = error.localizedDescription.lowercased()
-        return text.contains("expired")
-            || text.contains("invalid_grant")
-            || text.contains("unauthenticated")
-            || text.contains("401")
-            || text.contains("revoked")
     }
 }

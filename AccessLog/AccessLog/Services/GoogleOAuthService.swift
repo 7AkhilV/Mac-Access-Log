@@ -36,8 +36,13 @@ actor GoogleOAuthService {
         KeychainStore.load()?.email
     }
 
-    func accessToken() async throws -> String {
-        if let cachedAccessToken, cachedExpiry > Date().addingTimeInterval(60) {
+    func accessToken(forceRefresh: Bool = false) async throws -> String {
+        if forceRefresh {
+            cachedAccessToken = nil
+            cachedExpiry = .distantPast
+        }
+
+        if !forceRefresh, let cachedAccessToken, cachedExpiry > Date().addingTimeInterval(60) {
             return cachedAccessToken
         }
 
@@ -45,7 +50,7 @@ actor GoogleOAuthService {
             throw GoogleOAuthError.notSignedIn
         }
 
-        if tokens.expiry > Date().addingTimeInterval(60) {
+        if !forceRefresh, tokens.expiry > Date().addingTimeInterval(60) {
             cachedAccessToken = tokens.accessToken
             cachedExpiry = tokens.expiry
             return tokens.accessToken

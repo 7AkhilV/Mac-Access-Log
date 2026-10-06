@@ -25,6 +25,9 @@ struct AccessLogApp: App {
                     SetupStore.resetCompletion()
                     NotificationCenter.default.post(name: .showAccessLogSetup, object: nil)
                 }
+                Button("Help & Troubleshooting…") {
+                    NotificationCenter.default.post(name: .showAccessLogHelp, object: nil)
+                }
             }
         }
     }
@@ -32,6 +35,7 @@ struct AccessLogApp: App {
 
 extension Notification.Name {
     static let showAccessLogSetup = Notification.Name("showAccessLogSetup")
+    static let showAccessLogHelp = Notification.Name("showAccessLogHelp")
     static let openMainWindowIfNeeded = Notification.Name("openMainWindowIfNeeded")
 }
 
@@ -41,12 +45,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var unlockMonitor: UnlockMonitor?
     private var windowObserver: NSObjectProtocol?
 
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // Must happen before SwiftUI decides whether to create the window.
+        // Login-item launches skip the window if this is still the default.
+        NSApp.setActivationPolicy(.regular)
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         UserDefaults.standard.set(false, forKey: "NSQuitAlwaysKeepsWindows")
         NSWindow.allowsAutomaticWindowTabbing = false
         NSApp.setActivationPolicy(.regular)
         SetupStore.importBundledSeedIfNeeded()
         LoginAutostart.install()
+
+        // A login item can sit in the Dock with no window. Replace that
+        // process with one started by `open`, which is allowed to show UI.
+        if LoginAutostart.needsForegroundRelaunch, LoginAutostart.relaunchInForeground() {
+            DispatchQueue.main.async {
+                NSApp.terminate(nil)
+            }
+            return
+        }
 
         unlockMonitor = UnlockMonitor { [weak self] in
             guard SetupStore.isComplete else { return }
@@ -70,24 +89,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             await appModel.syncPendingIfPossible()
         }
 
+        showLaunchUI()
         scheduleShowRetries()
     }
 
-    /// Login Items start without focus. Keep raising the form until the desktop is ready.
+    /// Keep raising the window until the desktop is ready. Do not start a
+    /// second form after the user has already submitted this launch.
+    private var didAutoPresent = false
+
+    private func showLaunchUI() {
+        if SetupStore.isComplete {
+            if !didAutoPresent {
+                didAutoPresent = true
+                if appModel.isAwaitingSubmission {
+                    appModel.bringFormToFront(allowFallback: true)
+                } else {
+                    appModel.presentAccessForm()
+                }
+            } else if appModel.isAwaitingSubmission {
+                appModel.bringFormToFront(allowFallback: true)
+            }
+        } else {
+            appModel.bringFormToFront(allowFallback: true)
+        }
+    }
+
     private func scheduleShowRetries() {
         let delays: [TimeInterval] = [0.3, 1.0, 2.5, 5.0, 10.0, 18.0]
         for delay in delays {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                guard let self else { return }
-                if SetupStore.isComplete {
-                    if self.appModel.isAwaitingSubmission {
-                        self.appModel.bringFormToFront(allowFallback: delay >= 2.5)
-                    } else {
-                        self.appModel.presentAccessForm()
-                    }
-                } else {
-                    self.appModel.bringFormToFront(allowFallback: delay >= 2.5)
-                }
+                self?.showLaunchUI()
             }
         }
     }
@@ -107,7 +138,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if appModel.isAwaitingSubmission {
-            appModel.bringFormToFront()
+            appModel.bringFormToFront(allowFallback: true)
         } else {
             appModel.presentAccessForm()
         }
@@ -115,8 +146,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
-        if SetupStore.isComplete, appModel.isAwaitingSubmission {
-            appModel.bringFormToFront()
+        guard SetupStore.isComplete else {
+            appModel.bringFormToFront(allowFallback: true)
+            return
+        }
+        if appModel.isAwaitingSubmission || !didAutoPresent {
+            showLaunchUI()
         }
     }
 

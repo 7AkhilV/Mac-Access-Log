@@ -86,10 +86,8 @@ struct AccessLogFormView: View {
                 .padding(.top, 4)
 
                 if let status = model.statusMessage {
-                    Text(status)
-                        .font(.callout)
-                        .foregroundStyle(model.isSuccess ? Color.green : Color.secondary)
-                        .frame(maxWidth: .infinity)
+                    CopyableStatus(text: status, isSuccess: model.isSuccess)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .padding(40)
