@@ -40,13 +40,17 @@ actor GoogleAuthService {
     private var cachedToken: String?
     private var expiry: Date = .distantPast
 
-    func accessToken() async throws -> String {
+    func accessToken(forceRefresh: Bool = false) async throws -> String {
         if FileManager.default.fileExists(atPath: AppPaths.credentialsURL.path) {
+            if forceRefresh {
+                cachedToken = nil
+                expiry = .distantPast
+            }
             return try await serviceAccountAccessToken()
         }
 
         do {
-            return try await GoogleOAuthService.shared.accessToken()
+            return try await GoogleOAuthService.shared.accessToken(forceRefresh: forceRefresh)
         } catch {
             if FileManager.default.fileExists(atPath: AppPaths.credentialsURL.path) {
                 return try await serviceAccountAccessToken()
