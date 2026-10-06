@@ -19,6 +19,7 @@ DMG_NAME="AccessLog-Installer"
 CREDENTIALS=""
 SPREADSHEET_ID=""
 SHEET_NAME="Access Logs"
+LOCAL_SUPPORT="${HOME}/Library/Application Support/AccessLog"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -28,6 +29,11 @@ while [[ $# -gt 0 ]]; do
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
+
+# Default: bundle this Mac's service account only. Each install keeps its own Sheet.
+if [[ -z "$CREDENTIALS" && -f "$LOCAL_SUPPORT/credentials.json" ]]; then
+  CREDENTIALS="$LOCAL_SUPPORT/credentials.json"
+fi
 
 echo "→ Building Release…"
 OAUTH_JSON="$ROOT/AccessLog/Resources/GoogleOAuth.json"
@@ -81,20 +87,28 @@ EOF
   fi
 fi
 
-cat > "$STAGE/INSTALL.txt" <<'EOF'
+SA_EMAIL=""
+if [[ -n "$CREDENTIALS" && -f "$CREDENTIALS" ]]; then
+  SA_EMAIL="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("client_email",""))' "$CREDENTIALS")"
+fi
+
+cat > "$STAGE/INSTALL.txt" <<EOF
 Access Log — Install
 ====================
 
-1. Drag AccessLog into the Applications folder.
-2. Open AccessLog from Applications (right-click → Open the first time if macOS blocks it).
-3. Follow the on-screen Setup Wizard:
-   - Choose credentials.json (skipped if your admin already bundled it)
-   - Paste your Google Sheet link
-   - Share the Sheet with the shown service-account email as Editor
-   - Run connection test
-4. Keep the app running. It will open after Mac unlock.
+1. Drag AccessLog into Applications and open it.
+2. In Google Drive, create a Sheet (or use the one this Mac already uses).
+   First row: ID | Name | Purpose | Date | Time
+3. Share THAT Sheet as Editor with:
+   ${SA_EMAIL:-the service-account email shown in the app}
+4. In the Access Log wizard, paste your Sheet link and run the connection test.
 
-Re-open setup anytime: Access Log menu → Run Setup Wizard…
+Do not sign in with Google.
+New users: use your own Sheet.
+Existing users: keep this Mac’s current Sheet; only add the email above as Editor.
+
+Keep the app running so it can open after Mac unlock.
+Re-open setup: Access Log menu → Run Setup Wizard…
 EOF
 
 DMG_PATH="$BUILD_DIR/$DMG_NAME.dmg"
@@ -110,4 +124,4 @@ echo ""
 echo "✓ Installer ready:"
 echo "  $DMG_PATH"
 echo ""
-echo "Give users that DMG. Prefer --credentials and --spreadsheet-id so they only share the Sheet + test."
+echo "Give users that DMG. They only need to share the Sheet with the service-account email as Editor."

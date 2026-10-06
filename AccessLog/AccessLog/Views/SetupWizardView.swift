@@ -42,39 +42,40 @@ struct SetupWizardView: View {
         switch setup.step {
         case .welcome:
             VStack(alignment: .leading, spacing: 10) {
-                Text("After Mac login/unlock, Access Log asks for Name + Purpose and syncs to your Google Sheet.")
-                Text("You’ll:")
+                Text("After each Mac unlock you enter Name + Purpose. That row is saved to YOUR Google Sheet.")
+                Text("Do this once:")
                     .fontWeight(.medium)
-                labeled("1", SetupStore.hasCredentials
-                    ? "Use the bundled service account (does not expire)"
-                    : "Sign in with your Google account")
-                labeled("2", "Create a new Sheet (or paste an existing Sheet link)")
-                labeled("3", "Run a quick connection test")
+                labeled("1", "Create a Google Sheet (or use one you already have)")
+                labeled("2", "First row: ID | Name | Purpose | Date | Time")
+                labeled("3", "Share that Sheet as Editor with the service-account email shown next")
+                labeled("4", "Paste your Sheet link here and run the connection test")
+                Text("You do not sign in with Google. Each Mac keeps its own Sheet.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 4)
             }
 
-        case .signIn:
+        case .credentials:
             VStack(alignment: .leading, spacing: 12) {
-                if SetupStore.hasCredentials {
-                    Label("Using the company service account. This login does not expire.", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                    Text("Google sign-in is optional. The service account writes to the shared Sheet.")
+                if !setup.serviceAccountEmail.isEmpty {
+                    Text("Service account is already installed. Share YOUR Sheet as Editor with this email:")
+                    Text(setup.serviceAccountEmail)
+                        .font(.system(.body, design: .monospaced))
+                        .textSelection(.enabled)
+                    Text("Open the Sheet in a browser → Share → add the email → Editor → Send.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                } else {
-                    Text("Sign in so Access Log can write to your spreadsheet only.")
-                    if setup.signedInEmail.isEmpty {
-                        Button(setup.isBusy ? "Waiting for Google…" : "Sign in with Google") {
-                            setup.signInWithGoogle()
-                        }
-                        .disabled(setup.isBusy)
-                        .keyboardShortcut(.defaultAction)
-                    } else {
-                        Label("Signed in as \(setup.signedInEmail)", systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                        Button("Sign out") { setup.signOut() }
-                            .disabled(setup.isBusy)
+                    Button("Choose a different credentials.json") {
+                        setup.importCredentials()
                     }
-                    Text("A browser window will open. Approve Sheets access, then return here.")
+                    .buttonStyle(.plain)
+                } else {
+                    Text("Choose the service-account JSON so Access Log can write to Sheets without Google sign-in.")
+                    Button("Choose credentials.json") {
+                        setup.importCredentials()
+                    }
+                    .keyboardShortcut(.defaultAction)
+                    Text("Google Cloud → IAM → Service accounts → Keys → Add JSON key.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -82,14 +83,16 @@ struct SetupWizardView: View {
 
         case .spreadsheet:
             VStack(alignment: .leading, spacing: 12) {
-                Text("Use your own Google Sheet.")
-
-                Button(setup.isBusy ? "Creating…" : "Create a new Access Log sheet") {
-                    setup.createSpreadsheet()
+                Text("Use the Google Sheet for THIS Mac — not someone else’s.")
+                if !setup.serviceAccountEmail.isEmpty {
+                    Text("Share that Sheet as Editor with:")
+                    Text(setup.serviceAccountEmail)
+                        .font(.system(.body, design: .monospaced))
+                        .textSelection(.enabled)
                 }
-                .disabled(setup.isBusy)
 
-                Text("Or paste an existing Sheet link / ID:")
+                Text("Paste Sheet link or ID")
+                    .font(.headline)
                 TextField("https://docs.google.com/spreadsheets/d/…", text: $setup.sheetInput)
                     .textFieldStyle(.roundedBorder)
 
@@ -98,17 +101,17 @@ struct SetupWizardView: View {
                     .textFieldStyle(.roundedBorder)
 
                 if !setup.sheetInput.isEmpty {
-                    Button("Open Sheet") { setup.openSheetIfPossible() }
+                    Button("Open this Sheet") { setup.openSheetIfPossible() }
                 }
 
-                Text("Existing sheets should have headers: ID | Name | Purpose | Date | Time")
+                Text("First row must be: ID | Name | Purpose | Date | Time")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
         case .test:
             VStack(alignment: .leading, spacing: 12) {
-                Text("Confirms Google access and enables Open at Login.")
+                Text("This checks that the service account can write to the Sheet you pasted. If it fails, the Sheet is not shared as Editor with the email on the previous step.")
                 Button(setup.isBusy ? "Testing…" : "Run connection test") {
                     setup.runConnectionTest()
                 }

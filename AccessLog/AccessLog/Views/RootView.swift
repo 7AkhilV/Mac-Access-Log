@@ -5,6 +5,7 @@ struct RootView: View {
     @Environment(\.openWindow) private var openWindow
     @StateObject private var setupModel = SetupModel()
     @State private var showSetup: Bool = !SetupStore.isComplete
+    @State private var showHelp = false
 
     var body: some View {
         Group {
@@ -17,10 +18,29 @@ struct RootView: View {
                 AccessLogFormView()
             }
         }
+        .overlay(alignment: .topTrailing) {
+            Button {
+                showHelp = true
+            } label: {
+                Image(systemName: "questionmark.circle")
+                    .font(.system(size: 20))
+                    .padding(14)
+            }
+            .buttonStyle(.plain)
+            .help("Help & troubleshooting")
+        }
+        .sheet(isPresented: $showHelp) {
+            HelpGuideView { showHelp = false }
+        }
         .onAppear {
             SetupStore.importBundledSeedIfNeeded()
             if SetupStore.isComplete {
-                appModel.presentAccessForm()
+                // A second window appearing later must not wipe what was typed.
+                if appModel.isAwaitingSubmission {
+                    appModel.bringFormToFront(allowFallback: true)
+                } else {
+                    appModel.presentAccessForm()
+                }
             } else {
                 showSetup = true
             }
@@ -33,6 +53,9 @@ struct RootView: View {
             if AppModel.mainContentWindows().isEmpty {
                 openWindow(id: "main")
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .showAccessLogHelp)) { _ in
+            showHelp = true
         }
     }
 }

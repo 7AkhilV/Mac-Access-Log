@@ -21,6 +21,7 @@
 		A1000000000000000000000D /* SetupModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* SetupModel.swift */; };
 		A1000000000000000000000E /* SetupWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* SetupWizardView.swift */; };
 		A1000000000000000000000F /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* RootView.swift */; };
+		A10000000000000000000018 /* HelpGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000001B /* HelpGuideView.swift */; };
 		A10000000000000000000010 /* GoogleOAuthConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* GoogleOAuthConfig.swift */; };
 		A10000000000000000000011 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* KeychainStore.swift */; };
 		A10000000000000000000012 /* LoopbackHTTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* LoopbackHTTPServer.swift */; };
@@ -47,6 +48,7 @@
 		A20000000000000000000010 /* SetupModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupModel.swift; sourceTree = "<group>"; };
 		A20000000000000000000011 /* SetupWizardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupWizardView.swift; sourceTree = "<group>"; };
 		A20000000000000000000012 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		A2000000000000000000001B /* HelpGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpGuideView.swift; sourceTree = "<group>"; };
 		A20000000000000000000013 /* GoogleOAuthConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleOAuthConfig.swift; sourceTree = "<group>"; };
 		A20000000000000000000014 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		A20000000000000000000015 /* LoopbackHTTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopbackHTTPServer.swift; sourceTree = "<group>"; };
@@ -119,6 +121,7 @@
 				A20000000000000000000005 /* AccessLogFormView.swift */,
 				A20000000000000000000011 /* SetupWizardView.swift */,
 				A20000000000000000000012 /* RootView.swift */,
+				A2000000000000000000001B /* HelpGuideView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -237,6 +240,7 @@
 				A1000000000000000000000D /* SetupModel.swift in Sources */,
 				A1000000000000000000000E /* SetupWizardView.swift in Sources */,
 				A1000000000000000000000F /* RootView.swift in Sources */,
+				A10000000000000000000018 /* HelpGuideView.swift in Sources */,
 				A10000000000000000000010 /* GoogleOAuthConfig.swift in Sources */,
 				A10000000000000000000011 /* KeychainStore.swift in Sources */,
 				A10000000000000000000012 /* LoopbackHTTPServer.swift in Sources */,
