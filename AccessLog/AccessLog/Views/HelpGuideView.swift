@@ -62,3 +62,26 @@ struct HelpGuideView: View {
         }
     }
 }
+
+struct CopyableStatus: View {
+    let text: String
+    var isSuccess: Bool = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(text)
+                .font(.callout)
+                .foregroundStyle(isSuccess ? Color.green : Color.primary)
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+            if !isSuccess {
+                Button("Copy error") {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(text, forType: .string)
+                }
+                .buttonStyle(.plain)
+                .font(.caption.weight(.semibold))
+            }
+        }
+    }
+}

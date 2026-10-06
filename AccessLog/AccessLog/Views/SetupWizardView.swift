@@ -13,10 +13,10 @@ struct SetupWizardView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
             if let status = setup.statusMessage {
-                Text(status)
-                    .font(.callout)
-                    .foregroundStyle(setup.testPassed && setup.step == .test ? Color.green : Color.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                CopyableStatus(
+                    text: status,
+                    isSuccess: setup.testPassed && setup.step == .test
+                )
             }
 
             Divider()
